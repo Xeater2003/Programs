@@ -1,0 +1,22 @@
+fun primeiraLetra(texto: String) : Char = texto[0]
+fun ultimaLetra(texto: String): Char = texto[texto.length-1]
+fun comecaComMaiuscula(texto: String): Boolean = texto[0] in 'A'..'Z'
+fun palavraGrande(palavra: String): Boolean = palavra.length > 8
+fun duplicaPrimeiraLetra(texto: String): String = "${texto[0]}$texto"
+
+fun main(){
+    val primeira = primeiraLetra("Hello World")
+    println(primeira)
+
+    val ultima = ultimaLetra("Hello World")
+    println(ultima)
+
+    val maiscula = comecaComMaiuscula("Babushka")
+    println(maiscula)
+
+    val grande = palavraGrande("Babus")
+    println(grande)
+
+    val duplica = duplicaPrimeiraLetra("ola")
+    println(duplica)
+}
