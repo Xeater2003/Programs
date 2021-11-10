@@ -20,3 +20,5 @@ fun main(){
     val duplica = duplicaPrimeiraLetra("ola")
     println(duplica)
 }
+//Principalmente focar nisto: "${texto[0]}$texto"
+//Might be helpful later
