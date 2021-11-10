@@ -1,0 +1,86 @@
+fun temKQJ(carta1: String, carta2:String): Boolean = carta1 == "K" || carta1 == "Q" || carta1 == "J" || carta2 == "K" || carta2 == "Q" || carta2 == "J"
+fun pontosAs(carta: String, temKQJ: Boolean): Int
+{
+    if (carta == "A" && temKQJ == true){
+        return 11
+    }
+    else if (carta == "A" && temKQJ == false){
+        return 1
+    }
+    else{
+        return 0
+    }
+}
+fun pontosKQJ(carta: String): Int
+{
+    if (carta == "K" || carta == "Q" || carta == "J"){
+        return 10
+    }
+    else{
+        return 0
+    }
+}
+fun outrosPontos(carta: String): Int
+{
+    if (carta == "1"){
+        return 1
+    }
+    if (carta == "2"){
+        return 2
+    }
+    if (carta == "3"){
+        return 3
+    }
+    if (carta == "4"){
+        return 4
+    }
+    if (carta == "5"){
+        return 5
+    }
+    if (carta == "6"){
+        return 6
+    }
+    if (carta == "7"){
+        return 7
+    }
+    if (carta == "8"){
+        return 8
+    }
+    if (carta == "9"){
+        return 9
+    }
+    if (carta == "10"){
+        return 10
+    }
+    else{
+        return 0
+    }
+}
+fun pontosTotais(carta1: String, carta2: String): Int
+{
+    if( temKQJ(carta1,carta2)==true){ //um é kqj ou as duas
+        return pontosAs(carta1,true) + outrosPontos(carta1) + outrosPontos(carta2) + pontosAs(carta2,true) + pontosKQJ(carta1) + pontosKQJ(carta2)
+    }
+    if(temKQJ(carta1,carta2)==false ){
+        return pontosAs(carta1,false) + outrosPontos(carta1) + outrosPontos(carta2) + pontosAs(carta2,false)
+    }
+    else{
+        return 0
+    }
+}
+
+
+
+
+fun main(){
+    println("Insira carta 1 (A,K,Q,J,10,9,8,7,6,5,4,3,2)")
+    val carta1 = readLine()
+    println("Insira carta 2 (A,K,Q,J,10,9,8,7,6,5,4,3,2)")
+    val carta2 = readLine()
+    if(carta1 != null && carta2 !== null){
+        val pontos = pontosTotais(carta1, carta2)
+        println("Pontos: ${pontos}")
+    }else{
+        println("So possivel calcular pontos com duas cartas validas")
+    }
+}
