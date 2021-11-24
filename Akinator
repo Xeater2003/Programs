@@ -1,0 +1,33 @@
+fun geraNumero(intervalo: IntRange) = intervalo.random()
+fun akinator(){
+    val num = geraNumero(1..1000)
+    var tentativas = 1
+    println("Estou a pensar num numero entre 1 e 1000. Adivinha qual!")
+    var guess = readLine()!!.toIntOrNull() ?: 0
+
+
+    while(guess != num){
+        if(guess <= 0 || guess > 1000){
+            println("Palpite invalido")
+
+        }
+        else if(guess > num){
+            println("Para baixo")
+
+        }
+        else{
+            println("Para cima")
+
+        }
+        tentativas++
+
+        guess = readLine()!!.toIntOrNull() ?: 0
+
+    }
+    println("Parabens! Acertaste ao fim de $tentativas tentativas")
+}
+
+fun main() {
+
+    akinator()
+}
