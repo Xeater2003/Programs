@@ -1,0 +1,29 @@
+fun tabuada(numero : Int){
+    var count = 1
+    if(numero in 1..10){
+        while(count != 11){
+            var resultado = numero * count
+            println("$numero * $count = $resultado")
+            count ++
+
+        }
+    }
+    else(println("Número Inválido"))
+
+}
+
+
+
+fun main() {
+
+    println("Introduza um numero de 1 a 10")
+    var numero = readLine()!!.toInt()
+    while(numero < 0 || numero > 10) {
+        println("Número inválido. Tente novamente")
+   numero = readLine()!!.toInt()
+
+
+    }
+    tabuada(numero)
+
+}
