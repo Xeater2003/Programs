@@ -1,0 +1,228 @@
+fun makeMenu(): String{
+    return "\nWelcome to DEISI Minesweeper\n\n1 - Start New Game\n0 - Exit Game\n"
+}
+fun makeTerrain(numLines: Int, numColumns: Int, numMines: Int, showLegend: Boolean = true, withColor: Boolean = false): String {
+    var count = 0
+    var numMinas = 0
+    var legenda = ""
+    var count2 = 0
+    val esc: String = "\u001B"
+    val legendColor = "$esc[97;44m"
+    val endLegendColor = "$esc[0m"
+    if (showLegend){
+        if (withColor){
+            legenda += "$legendColor    " + createLegend(numColumns)+ "    $endLegendColor"
+            legenda += "\n$legendColor 1 $endLegendColor P |"
+            while (numMinas != numMines || count != numColumns - numMines - 2) {
+                if (numMinas != numMines){
+                    legenda += " * |"
+                    numMinas++
+                } else if (count != numColumns - numMines - 2) {
+                    legenda += "   |"
+                    count++
+                }
+            }
+        }else if(!withColor){
+            legenda += "    " + createLegend(numColumns)+ "    "
+            legenda += "\n 1  P |"
+            while (numMinas != numMines || count != numColumns - numMines - 2) {
+                if (numMinas != numMines) {
+                    legenda += " * |"
+                    numMinas++
+                } else if (count != numColumns - numMines - 2) {
+                    legenda += "   |"
+                    count++
+                }
+            }
+        }
+        if(withColor){
+            legenda += " f $legendColor   $endLegendColor"
+            legenda += "\n$legendColor"
+
+            while (count2 <= numColumns) {
+                legenda += "   "
+                legenda += " "
+                count2++
+            }
+            legenda+= " $endLegendColor"
+        }
+        else if(!withColor){
+            legenda += " f "
+            legenda += "   "
+            legenda += "\n"
+            while (count2 <= numColumns) {
+                legenda += "    "
+                count2++
+            }
+            legenda += " "
+        }
+    }else if (!showLegend) {
+        legenda += " P |"
+        while (numMinas != numMines || count != numColumns - numMines - 2) {
+            if (numMinas != numMines) {
+                legenda += " * |"
+                numMinas++
+            } else if (count != numColumns - numMines - 2) {
+                legenda += "   |"
+                count++
+            }
+        }
+        legenda += " f "
+    }
+    return legenda
+}
+fun isNameValid(name: String?, minLength: Int = 3): Boolean{
+    var count = 0
+    var numspace = 0
+    if(name == null){
+        return false
+    }
+    else if (name == "" || name[0].isLowerCase() || name.length < minLength ){
+
+        return false
+    }
+    while(count != name.length){
+        if(name[count] == 32.toChar()){
+            numspace ++
+            if(name[count +1].isLowerCase()){
+                return false
+            }
+        }
+        if(name[count].isUpperCase() && count != 0 ){
+            if(name[count-1] != 32.toChar()){
+                return false
+            }
+        }
+        count ++
+    }
+    if(numspace == 0) return false
+    return true
+}
+fun calculateNumMinesForGameConfiguration(numLines: Int, numColumns: Int): Int?{
+    val casavazias = numLines * numColumns - 2
+    if(casavazias <= 0){
+        return null
+    }
+    return when (casavazias) {
+        1 -> 1
+        in 2..5 -> 2
+        in 6..10 -> 3
+        in 11..20 -> 6
+        in 21..50 -> 10
+        else -> 15
+    }
+}
+fun createLegend(numColumns: Int): String{
+
+    var count = 0
+    val letra = 65.toChar()
+    var resultado = ""
+    while (count != numColumns - 1){
+        resultado+= "${letra+count}   "
+        count ++
+    }
+    resultado+= "${letra+count}"
+    return resultado
+}
+fun isValidGameMinesConfiguration(numLines: Int, numColumns: Int, numMines: Int): Boolean{
+    val casavazias = numLines * numColumns - 2
+    if (numMines <= 0 || casavazias < numMines) return false
+    return true
+}
+fun verifyMenu(erro : String): Int {
+    println(makeMenu())
+    var escolha = readLine()?.toIntOrNull()
+    while ((escolha != 1 && escolha != 0) || escolha == null) {
+        println(erro)
+        print("\n")
+        println(makeMenu())
+        escolha = readLine()?.toIntOrNull()
+
+    }
+    if(escolha == null){
+        return 0
+    }
+
+    return escolha
+
+
+
+}
+fun verifyLine(erro : String): Int {
+    println("How many lines?")
+    var linhas = readLine()?.toIntOrNull()
+    while (linhas != 1){
+        println("$erro\n")
+        println("How many lines?")
+        linhas = readLine()?.toIntOrNull()
+    }
+    return linhas
+}
+fun verifyLegend(erro : String): String{
+    println("Show legend (y/n)?")
+    var legend = readLine()
+    while (legend != "y" && legend != "n"){
+        println(erro)
+        println("Show legend (y/n)?")
+        legend = readLine()
+    }
+    return legend
+}
+fun verifyColumns(erro : String) : Int {
+    println("How many columns?")
+    var columns = readLine()?.toIntOrNull()
+    while( columns == null || columns < 3){
+        println(erro)
+        println("How many columns?")
+        columns = readLine()?.toIntOrNull()
+    }
+
+
+    return columns
+}
+fun verifyMines(erro : String, colunas : Int, linhas : Int) : Int {
+    println("How many mines (press enter for default value)?")
+    var mines = readLine()?.toIntOrNull()
+    while(mines != null && !isValidGameMinesConfiguration(linhas,colunas,mines)){
+        println(erro)
+        print("\n")
+        println("How many mines (press enter for default value)?")
+        mines = readLine()?.toIntOrNull()
+    }
+    if(mines == null){
+        mines = calculateNumMinesForGameConfiguration(linhas,colunas)
+        if (mines == null){
+            return 0
+        }
+
+    }
+    return mines
+}
+fun main() {
+    val color2 : Boolean
+    val invalid = "Invalid response."
+    val escolha = verifyMenu(invalid)
+
+    if (escolha != 0) {
+        println("Enter player name?")
+        var nome = readLine()
+        var valido = isNameValid(nome)
+        while (!valido) {
+            println(invalid)
+            println("\nEnter player name?")
+            nome = readLine()
+            valido = isNameValid(nome)
+        }
+        val legend = verifyLegend(invalid)
+        val lines = verifyLine(invalid)
+        val columns = verifyColumns(invalid)
+        val mines = verifyMines(invalid, columns, lines)
+
+
+        if (legend == "y" || legend == "Y") {
+            println(makeTerrain(lines, columns, mines, true, true))
+        } else if (legend == "n" || legend == "N") {
+            println(makeTerrain(lines, columns, mines, false, ))
+        }
+    }
+}
