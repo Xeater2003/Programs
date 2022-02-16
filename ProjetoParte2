@@ -1,0 +1,492 @@
+fun makeMenu(): String{
+    return "\nWelcome to DEISI Minesweeper\n\n1 - Start New Game\n0 - Exit Game\n"
+}
+fun isNameValid(name: String?, minLength: Int = 3): Boolean{
+    var count = 0
+    var numspace = 0
+    if(name == null){
+        return false
+    }
+    else if (name == "" || name[0].isLowerCase() || name.length < minLength ){
+
+        return false
+    }
+    while(count != name.length){
+        if(name[count] == 32.toChar()){
+            numspace ++
+            if(name[count +1].isLowerCase()){
+                return false
+            }
+        }
+        if(name[count].isUpperCase() && count != 0 ){
+            if(name[count-1] != 32.toChar()){
+                return false
+            }
+        }
+        count ++
+    }
+    if(numspace == 0) return false
+    return true
+}
+fun createLegend(numColumns: Int): String{
+
+    var count = 0
+    val letra = 65.toChar()
+    var resultado = ""
+    while (count != numColumns - 1){
+        resultado+= "${letra+count}   "
+        count ++
+    }
+    resultado+= "${letra+count}"
+    return resultado
+}
+fun createMatrixTerrain(numLines: Int, numColumns: Int, numMines: Int, ensurePathToWin: Boolean = false): Array<Array<Pair<String, Boolean>>>{
+    val terreno = Array<Array<Pair<String, Boolean>>>(numLines){Array(numColumns){Pair(" ",false)} }
+    terreno[0][0] = Pair("P",true)
+    terreno[numLines-1][numColumns-1] = Pair("f",true)
+    var count = 0
+    if(!ensurePathToWin){
+        while(count != numMines){
+            var random = (0 until numLines).random()
+            var random2 = (0 until numColumns).random()
+            while((random == 0 && random2 == 0)||(random == numLines-1 && random2 == numColumns-1)||(terreno[random][random2] == Pair("*",false))){
+                random = (0 until numLines).random()
+                random2 = (0 until numColumns).random()
+            }
+            terreno[random][random2] = Pair("*",false)
+            count++
+        }
+    }
+    else{
+        var random: Int
+        var random2 :Int
+        do{
+            do{
+                random = (0 until numLines).random()
+                random2 = (0 until numColumns).random()
+                val yleft = getSquareAroundPoint(random,random2,numLines,numColumns).first.first
+                val xleft = getSquareAroundPoint(random,random2,numLines,numColumns).first.second
+                val yright = getSquareAroundPoint(random,random2,numLines,numColumns).second.first
+                val xright = getSquareAroundPoint(random,random2,numLines,numColumns).second.second
+                val valid = isEmptyAround(terreno,random,random2,yleft, xleft, yright, xright)
+            }while(!valid || terreno[random2][random].first != "" )
+            terreno[random][random2] = Pair("*",false)
+            count++
+        }while(count != numMines)
+    }
+    return terreno
+}
+fun fillNumberOfMines(matrixTerrain: Array<Array<Pair<String, Boolean>>>){
+    val numlinhas = matrixTerrain.size
+    val numColunas = matrixTerrain[numlinhas - 1].size
+    for(linha in 0 until numlinhas){
+        for(coluna in 0 until numColunas){
+            val numMinas = countNumberOfMinesCloseToCurrentCell(matrixTerrain, linha, coluna)
+            if(matrixTerrain[linha][coluna].first == " " && numMinas > 0){
+                matrixTerrain[linha][coluna] = Pair("$numMinas",false)
+            }
+        }
+    }
+}
+fun isEmptyAround(matrixTerrain: Array<Array<Pair<String, Boolean>>>, centerY: Int, centerX: Int, yl: Int, xl: Int, yr: Int, xr: Int): Boolean{
+    for (linha in yl..yr) {
+        for (coluna in xl..xr){
+            if(!(linha == centerY && coluna == centerX)){
+                if (((matrixTerrain[linha][coluna].first == "*") ||
+                            matrixTerrain[linha][coluna].first == "P" || matrixTerrain[linha][coluna].first == "f")) {
+                    return false
+                }
+            }
+
+        }
+    }
+    return true
+}
+fun countNumberOfMinesCloseToCurrentCell(matrixTerrain:Array<Array<Pair<String,Boolean>>>, centerY: Int,centerX: Int): Int{ //ACABAR
+    var count = 0
+    val numLinhas = matrixTerrain.size
+    val numColunas = matrixTerrain[numLinhas-1].size
+    val yleft = getSquareAroundPoint(centerY,centerX,numLinhas,numColunas).first.first
+    val xleft = getSquareAroundPoint(centerY,centerX,numLinhas,numColunas).first.second
+    val yright = getSquareAroundPoint(centerY,centerX,numLinhas,numColunas).second.first
+    val xright = getSquareAroundPoint(centerY,centerX,numLinhas,numColunas).second.second
+    for (linha in yleft..yright) {
+        for (coluna in xleft..xright){
+            if (matrixTerrain[linha][coluna].first == "*" && !(linha == centerY && coluna == centerX)) {
+                count ++
+            }
+        }
+    }
+    return count
+}
+fun revealMatrix(matrixTerrain: Array<Array<Pair<String, Boolean>>>, coordY: Int, coordX: Int, endGame: Boolean = false){
+    val matrixQuadrado = getSquareAroundPoint(coordY, coordX, matrixTerrain.size, matrixTerrain[matrixTerrain.size - 1].size)
+
+    val coordenadayl = matrixQuadrado.first.first
+    val coordenadayr = matrixQuadrado.second.first
+
+    val coordenadaxl = matrixQuadrado.first.second
+    val coordenadaxr = matrixQuadrado.second.second
+
+    for(primeiro in coordenadayl..coordenadayr){
+        for (segundo in coordenadaxl..coordenadaxr){
+            if (endGame){
+                matrixTerrain[primeiro][segundo] = Pair(matrixTerrain[primeiro][segundo].first, true)
+            }else{
+                if (matrixTerrain[primeiro][segundo].first != "*"){
+                    matrixTerrain[primeiro][segundo] = Pair(matrixTerrain[primeiro][segundo].first, true)
+                }
+            }
+        }
+    }
+
+
+}
+fun isMovementPValid(currentCoord : Pair<Int, Int>, targetCoord : Pair<Int, Int>): Boolean{
+    if(targetCoord.first > 0 && targetCoord.second > 0){
+        if((targetCoord.first - currentCoord.first in -1..1) && (targetCoord.second - currentCoord.second in -1..1)){
+            return true
+        }
+
+    }
+    return false
+}
+fun isCoordinateInsideTerrain(coord: Pair<Int, Int>, numColumns: Int, numLines: Int): Boolean{
+    if(coord.first >= numLines || coord.second >= numColumns || coord.first < 0 || coord.second < 0){
+        return false
+    }
+    return true
+}
+fun getCoordinates (readText: String?): Pair<Int, Int>?{
+
+    if(readText != null ){
+        if(readText.length != 2){
+            return null
+        }
+        else if(readText[0] == '0'){
+            return null
+        }
+        else if(readText[1].isUpperCase()){
+            if( readText[1] < 65.toChar() || readText[1] > 87.toChar()){
+                return null
+            }
+            var count = 0
+            var count2 = 48.toChar()
+            while(count2 != readText[0] - 1){
+                count ++
+                count2 ++
+            }
+            var count3 = 0
+            var count4 = 65.toChar()
+            while(count4 != readText[1]){
+                count3 ++
+                count4 ++
+            }
+            return Pair(count,count3)
+        }
+        else if(readText[1].isLowerCase()){
+            if( readText[1] < 97.toChar() || readText[1] > 122.toChar()){
+                return null
+            }
+            var count = 0
+            var count2 = 48.toChar()
+            while(count2 != readText[0] - 1){
+                count ++
+                count2 ++
+            }
+            var count3 = 0
+            var count4 = 97.toChar()
+            while(count4 != readText[1]){
+                count3 ++
+                count4 ++
+            }
+            return Pair(count,count3)
+
+        }
+    }
+
+    return null
+}
+fun getSquareAroundPoint(linha: Int, coluna: Int, numLines: Int, numColumns: Int): Pair<Pair<Int, Int>, Pair<Int, Int>>{
+    when{
+
+        linha == 0 && coluna == 0 -> return Pair(Pair(0,0),Pair(1,1))
+        linha == numLines-1 && coluna == numColumns-1 -> return Pair(Pair(linha-1,coluna-1),Pair(linha,coluna))
+
+        linha == numLines-1 && coluna == 0-> return Pair(Pair(linha - 1,coluna),Pair(linha ,coluna+1))
+        coluna == numColumns-1 && linha == 0-> return Pair(Pair(linha ,coluna - 1),Pair(linha + 1 ,coluna))
+
+        linha == 0 -> return Pair(Pair(linha,coluna-1),Pair(linha+1,coluna+1))
+        linha == numLines-1 -> return Pair(Pair(linha - 1,coluna - 1),Pair(linha ,coluna + 1))
+
+        coluna == 0 -> return Pair(Pair(linha-1,coluna),Pair(linha+1,coluna+1))
+        coluna == numColumns-1 -> return Pair(Pair(linha - 1 ,coluna - 1),Pair(linha + 1 ,coluna))
+
+
+        else -> return Pair(Pair(linha-1,coluna-1),Pair(linha+1,coluna+1))
+    }
+}
+fun calculateNumMinesForGameConfiguration(numLines: Int, numColumns: Int): Int?{
+    val casavazias = numLines * numColumns - 2
+    if(casavazias <= 0){
+        return null
+    }
+    return when (casavazias) {
+        in 14..20 -> 6
+        in 21..40 -> 9
+        in 41..60 -> 12
+        in 61..79 -> 19
+        else -> null
+    }
+}
+fun isValidGameMinesConfiguration(numLines: Int, numColumns: Int, numMines: Int): Boolean{
+    val casavazias = numLines * numColumns - 2
+    if (numMines <= 0 || casavazias < numMines) return false
+    return true
+}
+fun separadores(linha: Int,numLinhas: Int, numColunas: Int,showLegend: Boolean, withcolor : Boolean = false): String {
+    var devolve = ""
+    val esc: String = "\u001B"
+    var legendColor = "$esc[97;44m"
+    var endLegendColor = "$esc[0m"
+    if (!withcolor){
+        legendColor = ""
+        endLegendColor = ""
+    }
+
+    if (showLegend){
+        if (linha != numLinhas - 1) {
+            devolve += "$legendColor   $endLegendColor"
+            for (divisor in 0 until numColunas - 1) {
+                devolve += "---+"
+            }
+            devolve += "---$legendColor   $endLegendColor\n"
+        }
+    }else{
+        if (linha != numLinhas - 1) {
+            for (divisor in 0 until numColunas - 1) {
+                devolve += "---+"
+            }
+            devolve += "---\n"
+        }
+        return devolve
+    }
+    return devolve
+}
+fun makeTerrain(matrixTerrain:Array<Array<Pair<String,Boolean>>>,showLegend:Boolean, withColor:Boolean=false,showEverything:Boolean=false):String{
+    var resultado = ""
+    var count = 0
+    val esc: String = "\u001B"
+    var legendColor = "$esc[97;44m"
+    var endLegendColor = "$esc[0m"
+    val numLinhas = matrixTerrain.size
+    val numColunas = matrixTerrain[0].size
+    if (!withColor){
+        legendColor = ""
+        endLegendColor = ""
+    }
+    if(showLegend) {
+        resultado +="$legendColor    " + createLegend(numColunas) + "    $endLegendColor" + "\n"
+        for (linha in 0 until numLinhas) {
+            for (coluna in 0 until numColunas) {
+                if (matrixTerrain[linha][coluna].second || showEverything) {
+                    if (coluna == numColunas - 1) {
+                        resultado += " ${matrixTerrain[linha][coluna].first} $legendColor   $endLegendColor"
+                    } else if (coluna == 0) {
+                        resultado += "$legendColor ${linha + 1} $endLegendColor ${matrixTerrain[linha][coluna].first} |"
+                    } else {
+                        resultado += " ${matrixTerrain[linha][coluna].first} |"
+                    }
+                } else {
+                    if (coluna == numColunas - 1) {
+                        resultado += "   $legendColor   $endLegendColor"
+                    } else if (coluna == 0) {
+                        resultado += "$legendColor ${linha + 1} $endLegendColor   |"
+                    } else {
+                        resultado += "   |"
+                    }
+                }
+            }
+            resultado += "\n${separadores(linha,numLinhas,numColunas,showLegend,withColor)}"
+        }
+        resultado += "$legendColor"
+        while (count <= numColunas) {
+            resultado += "   "
+            resultado += " "
+            count++
+        }
+        resultado+= " $endLegendColor"
+        return resultado
+    }else {
+        for (linha in 0 until numLinhas) {
+            for (coluna in 0 until numColunas) {
+                if (matrixTerrain[linha][coluna].second || showEverything) {
+                    if (coluna == numColunas - 1) {
+                        resultado += " ${matrixTerrain[linha][coluna].first} "
+                    } else {
+                        resultado += " ${matrixTerrain[linha][coluna].first} |"
+                    }
+                } else {
+                    if (coluna == numColunas - 1) {
+                        resultado += "   "
+                    } else {
+                        resultado += "   |"
+                    }
+                }
+            }
+            if(linha != numLinhas-1){
+                resultado += "\n"
+            }
+            resultado += separadores(linha,numLinhas,numColunas,showLegend)
+        }
+    }
+    return resultado
+}
+fun verifyMenu(erro : String): Int {
+    println(makeMenu())
+    var escolha = readLine()?.toIntOrNull()
+    while ((escolha != 1 && escolha != 0) || escolha == null) {
+        println(erro)
+        print("\n")
+        println(makeMenu())
+        escolha = readLine()?.toIntOrNull()
+
+    }
+    if(escolha == null){
+        return 0
+    }
+    return escolha
+}
+fun verifyLine(erro : String): Int {
+    println("How many lines?")
+    var linhas = readLine()?.toIntOrNull()
+    while (linhas == null || linhas <= 3 || linhas > 9){
+        println("$erro\n")
+        println("How many lines?")
+        linhas = readLine()?.toIntOrNull()
+    }
+    return linhas
+}
+fun verifyLegend(erro : String): String{
+    println("Show legend (y/n)?")
+    var legend = readLine()
+    while (legend != "y" && legend != "n"){
+        println(erro)
+        println("Show legend (y/n)?")
+        legend = readLine()
+    }
+    return legend
+}
+fun verifyColumns(erro : String) : Int {
+    println("How many columns?")
+    var columns = readLine()?.toIntOrNull()
+    while( columns == null || columns <= 3 || columns > 9){
+        println(erro)
+        println("How many columns?")
+        columns = readLine()?.toIntOrNull()
+    }
+
+
+    return columns
+}
+fun verifyMines(erro : String, colunas : Int, linhas : Int) : Int {
+    println("How many mines (press enter for default value)?")
+    var mines = readLine()?.toIntOrNull()
+    while(mines != null && !isValidGameMinesConfiguration(linhas,colunas,mines)){
+        println(erro)
+        print("\n")
+        println("How many mines (press enter for default value)?")
+        mines = readLine()?.toIntOrNull()
+    }
+    if(mines == null){
+        mines = calculateNumMinesForGameConfiguration(linhas,colunas)
+        if (mines == null){
+            return 0
+        }
+
+    }
+    return mines
+}
+fun main() {
+    do{
+    val color2: Boolean
+    val invalid = "Invalid response."
+    val escolha = verifyMenu(invalid)
+
+    if (escolha != 0) {
+        println("Enter player name?")
+        var nome = readLine()
+        var valido = isNameValid(nome)
+        while (!valido) {
+            println(invalid)
+            println("\nEnter player name?")
+            nome = readLine()
+            valido = isNameValid(nome)
+        }
+        val legend = verifyLegend(invalid)
+        val lines = verifyLine(invalid)
+        val columns = verifyColumns(invalid)
+        val mines = verifyMines(invalid, columns, lines)
+        val terreno = createMatrixTerrain(lines, columns, mines)
+        var legenda : Boolean = false
+        fillNumberOfMines(terreno)
+        revealMatrix(terreno,0,0,true)
+        var currentCoord = Pair(0,0)
+
+        if (legend == "y" || legend == "Y") {
+            println(makeTerrain(terreno,true))
+             legenda = true
+        } else if (legend == "n" || legend == "N") {
+            println(makeTerrain(terreno,false))
+             legenda = false
+        }
+        do{
+            var endgame : Boolean = false
+        do {
+            println("Choose the Target cell (e.g 2D)")
+            val jogada = readLine()
+            val targetcoords = getCoordinates(jogada)
+
+            val casasantigas = Pair(0,0)
+            var casasantigasval = Pair(" ",false)
+            if(jogada == "abracadabra"){
+                println(makeTerrain(terreno,legenda,showEverything = true))
+            }
+            else if(jogada == "exit"){
+                return
+            }
+            else if(targetcoords == null){
+                println(invalid)
+            }
+            else{
+                if(terreno[targetcoords.first][targetcoords.second].first == "f"){
+                    println(makeTerrain(terreno,legenda, showEverything = true))
+                    println("You win the game!")
+                    endgame = true
+                }
+                else if(terreno[targetcoords.first][targetcoords.second].first == "*"){
+                    println(makeTerrain(terreno,legenda, showEverything = true))
+                    println("You lost the game!")
+                    endgame = true
+                }
+                else{
+                    terreno[targetcoords.first][targetcoords.second] = Pair("P",true)
+                    terreno[currentCoord.first][currentCoord.second] = Pair(" ",false)
+                    revealMatrix(terreno,targetcoords.first,targetcoords.second)
+                    currentCoord = targetcoords
+                }
+
+            }
+
+
+        }while(targetcoords != null && !(isMovementPValid(currentCoord,targetcoords)) && !(isCoordinateInsideTerrain(targetcoords,columns,lines)))
+            if(endgame != true){
+                println(makeTerrain(terreno,legenda))
+            }
+    }while(endgame != true)
+
+
+
+    }
+}while(escolha != 0)
+}
